@@ -265,7 +265,7 @@ test("authenticated query should fail when opa throws", async () => {
     })
     .reply(
       400,
-      { warning: {code: "invalid input" } },
+      { warning: { code: "invalid input" } },
       { headers: { "Content-Type": "application/json" } }
     );
 
@@ -292,4 +292,73 @@ test("authenticated query should fail when opa throws", async () => {
       }
     ]
   });
+});
+
+test("should set a different context field name", async () => {
+
+  const typeDefs = `#graphql
+  ${fs.readFileSync(path.join(__dirname, "../lib/opaAuthDirective.gql"), "utf-8")}
+  
+  type Query {
+    ping(message: String!): String! @opa(path: "query/ping", options: { bar: "foo", baz: 123, qux: true, bing: { bong: "doo" }, fl: 1.34, n: null, arr: [{a: "b"}, {c: "d"}] })
+  }
+`;
+
+  const resolvers = {
+    Query: {
+      ping: (source, args) => args.message
+    }
+  }
+
+  const app = fastify({ logger: testLogger });
+
+  const opaClient = new OpenPolicyAgentClient({
+    url: "http://opa.test:3000"
+  });
+
+  const schema = opaAuthTransformer(opaClient, app.log, {
+    requestContextField: "request"
+  })(makeExecutableSchema({ typeDefs, resolvers }));
+
+  const apolloServer = new ApolloServer<{request: IncomingMessage}>({
+    schema,
+    plugins: [fastifyApolloDrainPlugin(app)],
+    includeStacktraceInErrorResponses: false
+  });
+
+  await apolloServer.start();
+
+  app.log.debug({}, "Apollo Server plugin loaded");
+
+  // build context function
+  await app.register(fastifyApollo(apolloServer), {
+    context: async (req, repl) => {
+      return {
+        request: req.raw
+      };
+    }
+  });
+  const opaPolicyMock = sinon
+    .stub<never, ReturnType<MockInterceptor.MockReplyOptionsCallback>>()
+    .returns({
+      statusCode: 200,
+      data: { result: true },
+      responseOptions: { headers: { "Content-Type": "application/json" } }
+    });
+
+  mockAgent
+    .get("http://opa.test:3000")
+    .intercept({
+      path: "/v1/data/query/ping",
+      method: "POST"
+    })
+    .reply(opaPolicyMock);
+
+  const testClient = createGraphqlTestClient(app);
+  const response = await testClient.query(`#graphql
+    query { ping(message: "pong") }
+  `);
+
+  deepStrictEqual(response, { data: { ping: "pong" } });
+
 });

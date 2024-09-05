@@ -1,5 +1,5 @@
 export type GraphqlOpaDirectiveOptions = {
-  directiveName: string
+  directiveName?: string
   /**
    * The context field that extends http.IncomingMessage type   
    * 'req' is the default following the standalone server context

@@ -29,13 +29,12 @@ export const opaAuthTransformer =
       )?.[0];
 
       if (opaDirective) {
-        /* istanbul ignore next */
+        /* c8 ignore next */
         const { resolve = defaultFieldResolver } = fieldConfig;
 
         fieldConfig.resolve = async function (source, args, context, info) {
           const path = opaDirective.path
 
-          // TODO: check path field exists
           const options = opaDirective.options
 
           const requestContext = context[contextField]
