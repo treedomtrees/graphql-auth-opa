@@ -1,8 +1,8 @@
-import pino from 'pino'
+import pino from "pino";
 
 export const testLogger = pino({
-  level: 'error',
+  level: "error",
   transport: {
-    target: 'pino-pretty',
+    target: "pino-pretty",
   },
-})
+});

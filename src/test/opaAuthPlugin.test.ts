@@ -13,7 +13,7 @@ import sinon from "sinon";
 import { MockInterceptor } from "undici-types/mock-interceptor";
 
 import fastifyApollo, {
-  fastifyApolloDrainPlugin
+  fastifyApolloDrainPlugin,
 } from "@as-integrations/fastify";
 import { IResolvers } from "@graphql-tools/utils";
 import { createGraphqlTestClient } from "./helpers/graphqlTestClient";
@@ -33,18 +33,18 @@ const createApp = async (typeDefs: string, resolvers: IResolvers<any, any>) => {
   const app = fastify({ logger: testLogger });
 
   const opaClient = new OpenPolicyAgentClient({
-    url: "http://opa.test:3000"
+    url: "http://opa.test:3000",
   });
 
   const schema = opaAuthTransformer(
     opaClient,
-    app.log
+    app.log,
   )(makeExecutableSchema({ typeDefs, resolvers }));
 
   const apolloServer = new ApolloServer<ApolloContext>({
     schema,
     plugins: [fastifyApolloDrainPlugin(app)],
-    includeStacktraceInErrorResponses: false
+    includeStacktraceInErrorResponses: false,
   });
 
   await apolloServer.start();
@@ -53,11 +53,11 @@ const createApp = async (typeDefs: string, resolvers: IResolvers<any, any>) => {
 
   // build context function
   await app.register(fastifyApollo(apolloServer), {
-    context: async (req, repl) => {
+    context: async (req) => {
       return {
-        req: req.raw
+        req: req.raw,
       };
-    }
+    },
   });
 
   return app;
@@ -78,8 +78,8 @@ test("unauthenticated query should succeed", async () => {
 
   const app = await createApp(schema, {
     Query: {
-      ping: (source, args) => args.message
-    }
+      ping: (source, args) => args.message,
+    },
   });
 
   const testClient = createGraphqlTestClient(app);
@@ -100,8 +100,8 @@ test("authenticated query should succeed", async () => {
 `;
   const app = await createApp(schema, {
     Query: {
-      ping: (source, args) => args.message
-    }
+      ping: (source, args) => args.message,
+    },
   });
 
   const opaPolicyMock = sinon
@@ -109,14 +109,14 @@ test("authenticated query should succeed", async () => {
     .returns({
       statusCode: 200,
       data: { result: true },
-      responseOptions: { headers: { "Content-Type": "application/json" } }
+      responseOptions: { headers: { "Content-Type": "application/json" } },
     });
 
   mockAgent
     .get("http://opa.test:3000")
     .intercept({
       path: "/v1/data/query/ping",
-      method: "POST"
+      method: "POST",
     })
     .reply(opaPolicyMock);
 
@@ -137,7 +137,7 @@ test("authenticated query should succeed", async () => {
     bing: { bong: "doo" },
     fl: 1.34,
     n: null,
-    arr: [{ a: "b" }, { c: "d" }]
+    arr: [{ a: "b" }, { c: "d" }],
   });
 });
 
@@ -151,20 +151,20 @@ test("authenticated query should fail", async () => {
 
   const app = await createApp(schema, {
     Query: {
-      ping: (source, args) => args.message
-    }
+      ping: (source, args) => args.message,
+    },
   });
 
   mockAgent
     .get("http://opa.test:3000")
     .intercept({
       path: "/v1/data/query/ping",
-      method: "POST"
+      method: "POST",
     })
     .reply(
       200,
       { result: false },
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { "Content-Type": "application/json" } },
     );
 
   const testClient = createGraphqlTestClient(app);
@@ -177,18 +177,18 @@ test("authenticated query should fail", async () => {
     errors: [
       {
         extensions: {
-          code: "NOT_AUTHORIZED"
+          code: "NOT_AUTHORIZED",
         },
         locations: [
           {
             column: 13,
-            line: 2
-          }
+            line: 2,
+          },
         ],
         message: "Not authorized",
-        path: ["ping"]
-      }
-    ]
+        path: ["ping"],
+      },
+    ],
   });
 });
 
@@ -202,8 +202,8 @@ test("authenticated query should succeed when opa path starts with slash", async
 
   const app = await createApp(schema, {
     Query: {
-      ping: (source, args) => args.message
-    }
+      ping: (source, args) => args.message,
+    },
   });
 
   const opaPolicyMock = sinon
@@ -211,14 +211,14 @@ test("authenticated query should succeed when opa path starts with slash", async
     .returns({
       statusCode: 200,
       data: { result: true },
-      responseOptions: { headers: { "Content-Type": "application/json" } }
+      responseOptions: { headers: { "Content-Type": "application/json" } },
     });
 
   mockAgent
     .get("http://opa.test:3000")
     .intercept({
       path: "/v1/data/query/ping",
-      method: "POST"
+      method: "POST",
     })
     .reply(opaPolicyMock);
 
@@ -239,7 +239,7 @@ test("authenticated query should succeed when opa path starts with slash", async
     bing: { bong: "doo" },
     fl: 1.34,
     n: null,
-    arr: [{ a: "b" }, { c: "d" }]
+    arr: [{ a: "b" }, { c: "d" }],
   });
 });
 
@@ -253,20 +253,20 @@ test("authenticated query should fail when opa throws", async () => {
 
   const app = await createApp(schema, {
     Query: {
-      ping: (source, args) => args.message
-    }
+      ping: (source, args) => args.message,
+    },
   });
 
   mockAgent
     .get("http://opa.test:3000")
     .intercept({
       path: "/v1/data/query/ping",
-      method: "POST"
+      method: "POST",
     })
     .reply(
       400,
       { warning: { code: "invalid input" } },
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { "Content-Type": "application/json" } },
     );
 
   const testClient = createGraphqlTestClient(app);
@@ -279,23 +279,22 @@ test("authenticated query should fail when opa throws", async () => {
     errors: [
       {
         extensions: {
-          code: "NOT_AUTHORIZED"
+          code: "NOT_AUTHORIZED",
         },
         locations: [
           {
             column: 13,
-            line: 2
-          }
+            line: 2,
+          },
         ],
         message: "Internal Server Error",
-        path: ["ping"]
-      }
-    ]
+        path: ["ping"],
+      },
+    ],
   });
 });
 
 test("should set a different context field name", async () => {
-
   const typeDefs = `#graphql
   ${fs.readFileSync(path.join(__dirname, "../lib/opaAuthDirective.gql"), "utf-8")}
   
@@ -306,24 +305,24 @@ test("should set a different context field name", async () => {
 
   const resolvers = {
     Query: {
-      ping: (source, args) => args.message
-    }
-  }
+      ping: (source, args) => args.message,
+    },
+  };
 
   const app = fastify({ logger: testLogger });
 
   const opaClient = new OpenPolicyAgentClient({
-    url: "http://opa.test:3000"
+    url: "http://opa.test:3000",
   });
 
   const schema = opaAuthTransformer(opaClient, app.log, {
-    requestContextField: "request"
+    requestContextField: "request",
   })(makeExecutableSchema({ typeDefs, resolvers }));
 
-  const apolloServer = new ApolloServer<{request: IncomingMessage}>({
+  const apolloServer = new ApolloServer<{ request: IncomingMessage }>({
     schema,
     plugins: [fastifyApolloDrainPlugin(app)],
-    includeStacktraceInErrorResponses: false
+    includeStacktraceInErrorResponses: false,
   });
 
   await apolloServer.start();
@@ -332,25 +331,25 @@ test("should set a different context field name", async () => {
 
   // build context function
   await app.register(fastifyApollo(apolloServer), {
-    context: async (req, repl) => {
+    context: async (req) => {
       return {
-        request: req.raw
+        request: req.raw,
       };
-    }
+    },
   });
   const opaPolicyMock = sinon
     .stub<never, ReturnType<MockInterceptor.MockReplyOptionsCallback>>()
     .returns({
       statusCode: 200,
       data: { result: true },
-      responseOptions: { headers: { "Content-Type": "application/json" } }
+      responseOptions: { headers: { "Content-Type": "application/json" } },
     });
 
   mockAgent
     .get("http://opa.test:3000")
     .intercept({
       path: "/v1/data/query/ping",
-      method: "POST"
+      method: "POST",
     })
     .reply(opaPolicyMock);
 
@@ -360,5 +359,4 @@ test("should set a different context field name", async () => {
   `);
 
   deepStrictEqual(response, { data: { ping: "pong" } });
-
 });

@@ -4,7 +4,7 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "mkdir -p ./dist/lib && cp ./src/lib/opaAuthDirective.gql ./dist/lib/ && borp --coverage --coverage-exclude test/**/*.js",
-    "lint": "eslint src",
+    "lint": "eslint src --cache",
     "prebuild": "rm -rf lib",
     "build": "tsc --build tsconfig.build.json",
     "postbuild": "copyfiles src/lib/**/*.gql lib/ --all --verbose --up 2"
@@ -37,14 +37,13 @@
     "@typescript-eslint/parser": "7.12.0",
     "borp": "0.14.0",
     "copyfiles": "2.4.1",
-    "eslint": "8.57.0",
-    "eslint-config-prettier": "8.10.0",
-    "eslint-plugin-node": "11.1.0",
-    "eslint-plugin-prettier": "5.1.3",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
     "fastify": "4.27.0",
     "pino": "9.1.0",
     "pino-pretty": "11.1.0",
-    "prettier": "3.3.0",
+    "prettier": "^3.2.5",
     "sinon": "18.0.0",
     "typescript": "5.4.5"
   },

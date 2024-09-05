@@ -1,9 +1,9 @@
-import { readFileSync } from 'fs'
-import { join } from 'path'
+import { readFileSync } from "fs";
+import { join } from "path";
 
 export const opaAuthDirective = readFileSync(
-  join(__dirname, 'opaAuthDirective.gql'),
+  join(__dirname, "opaAuthDirective.gql"),
   {
-    encoding: 'utf-8',
-  }
-)
+    encoding: "utf-8",
+  },
+);

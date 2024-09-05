@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { GraphQLSchema, GraphQLFieldConfig } from "graphql";
 import { defaultFieldResolver } from "graphql";
 
@@ -5,7 +6,7 @@ import {
   createGraphQLError,
   getDirective,
   MapperKind,
-  mapSchema
+  mapSchema,
 } from "@graphql-tools/utils";
 
 import { GraphqlOpaDirectiveOptions } from "./types/graphqlOpaDirectiveOptions";
@@ -16,16 +17,20 @@ interface OpaClient {
 }
 
 export const opaAuthTransformer =
-  (opaClient: OpaClient, logger: BaseLogger, options?: GraphqlOpaDirectiveOptions) =>
-  (schema: GraphQLSchema, ) => {
+  (
+    opaClient: OpaClient,
+    logger: BaseLogger,
+    options?: GraphqlOpaDirectiveOptions,
+  ) =>
+  (schema: GraphQLSchema) => {
     const executeDirective = (
-      fieldConfig: GraphQLFieldConfig<any, any, any>
+      fieldConfig: GraphQLFieldConfig<any, any, any>,
     ) => {
       const contextField = options?.requestContextField ?? "req";
       const opaDirective = getDirective(
         schema,
         fieldConfig,
-        options?.directiveName ?? "opa"
+        options?.directiveName ?? "opa",
       )?.[0];
 
       if (opaDirective) {
@@ -33,11 +38,11 @@ export const opaAuthTransformer =
         const { resolve = defaultFieldResolver } = fieldConfig;
 
         fieldConfig.resolve = async function (source, args, context, info) {
-          const path = opaDirective.path
+          const path = opaDirective.path;
 
-          const options = opaDirective.options
+          const options = opaDirective.options;
 
-          const requestContext = context[contextField]
+          const requestContext = context[contextField];
 
           // console.log(requestContext)
           const allowed = await opaClient
@@ -45,19 +50,19 @@ export const opaAuthTransformer =
               headers: requestContext.headers,
               parent: source,
               args,
-              options
+              options,
             })
             .catch((err) => {
               logger.error({ err }, "Error while evaluating OPA policy");
 
               throw createGraphQLError("Internal Server Error", {
-                extensions: { code: "NOT_AUTHORIZED" }
+                extensions: { code: "NOT_AUTHORIZED" },
               });
             });
 
           if (!allowed) {
             throw createGraphQLError("Not authorized", {
-              extensions: { code: "NOT_AUTHORIZED" }
+              extensions: { code: "NOT_AUTHORIZED" },
             });
           }
 
@@ -70,7 +75,7 @@ export const opaAuthTransformer =
 
     return mapSchema(schema, {
       [MapperKind.OBJECT_FIELD]: executeDirective,
-      [MapperKind.FIELD]: executeDirective
+      [MapperKind.FIELD]: executeDirective,
     });
   };
 
