@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "target": "ES2022",
+    "esModuleInterop": true,
+    "removeComments": true,
+    "allowJs": true,
+    "outDir": "./dist",
+    "forceConsistentCasingInFileNames": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "skipLibCheck": true,
+    "incremental": true,
+    "sourceMap": true
+  },
+  "include": ["./src/**/*"]
+}
