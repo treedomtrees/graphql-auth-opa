@@ -9,62 +9,52 @@ __Made with ❤️ at&nbsp;&nbsp;[<img src="https://assets.treedom.net/image/upl
 ## Usage
 
 ```typescript
-import { opaAuthPlugin } from "@treedom/graphql-auth-opa";
 import { opaAuthDirective } from "@treedom/graphql-auth-opa/opaAuthDirective";
+import { OpenPolicyAgentClient } from "@treedom/opa-client-sdk";
+// 
 
-  // Include the directive in the schema
-  const typeDefs = `#graphql
-  ${opaAuthDirective}
+// Include the directive in the schema
+const typeDefs = `#graphql
+${opaAuthDirective}
 
-  type Query {
-    ping(message: String!): String! @opa(path: "my/opa/policy", options: { ... })
-  }
-  `
+type Query {
+  ping(message: String!): String! @opa(path: "my/opa/policy", options: { ... })
+}
+`
 
-  // Apply the transformer function to the schema
-  const schema = opaAuthDirective(
-  makeExecutableSchema({ typeDefs }),
-  options: {
+// Configure OPA auth transformer
+const opaTransformer =  opaAuthDirective(
+  {
     requestContextField?: string // default: 'req' 
     directiveName?: string
-  })
+  }
+)
 
-  // if you want the context apply it to the Apollo context type
-  type MyContext = {request: IncomingMessage}
+// Apply the transformer function to the schema
+const schema = opaTransformer(makeExecutableSchema({ typeDefs }))
 
+// if you want the context apply it to the Apollo context type
+type MyContext = {request: IncomingMessage}
 
-  const server = new ApolloServer<MyContext>({
-    schema
-  });
+const server = new ApolloServer<MyContext>({
+  schema
+});
 
-  // Start apollo with standalone server
+// Start apollo with standalone server
 
-  const { url } = await startStandaloneServer(server, {
-    // require an http.IncomingMessage implementation 
-    context: async ({ req }) => ({ request: req }),
-  });
-
-  app.register(mercurius, {
-    schema,
-    resolvers: {
-      Query: {
-        ping: (source, args) => args.message,
-      },
-    },
-  })
-
-app.register(opaAuthPlugin, {
-  opaEndpoint: 'https://my.opa.endpoint',
-})
+const { url } = await startStandaloneServer(server, {
+  // require an http.IncomingMessage implementation 
+  context: async ({ req }) => ({ request: req }),
+});
 ```
 
 ## OPA policy input
 
 This plugin queries OPA providing the following properties as `input`
 
-- `headers` the Fastify headers object
-- `parent` the Mercurius parent object of the field/object which got queried
-- `args` the Mercurius args object of the field/object which got queried
+- `headers` the headers object, this require a context request forwarding
+- `parent` the GraphQL parent object of the field/object which got queried
+- `args` the GraphQL args object of the field/object which got queried
 - `options` static untyped properties defined in the directive arguments _(optional)_
 
 ### Example Rego Policy
@@ -89,6 +79,86 @@ allow if {
 }
 ```
 
+## Headers forwarding
+
+If you need to forward the headers to OPA you can use the `requestContextField` option to specify the name of the request context field
+
+To do that you need to manually build the context by adding the request object. 
+
+> Currently the request should have a `headers` property with `http.IncomingHttpHeaders` type. 
+> Compatible with `FastifyRequest<...>` and `http.IncomingRequest`
+
+### Apollo Server Example
+```typescript
+import { IncomingMessage } from 'node:http'
+
+type MyContext { 
+  req: IncomingMessage
+}
+
+const opaClient = new OpenPolicyAgentClient({
+  url: 'http://opa.test:3000',
+})
+
+const transformer = opaTransformer(opaClient, {
+  requestContextField: 'req' // should be the name of the request context field
+})
+
+const schema = transformer(makeExecutableSchema({ typeDefs, ... }))
+
+
+const server = new ApolloServer<MyContext>({...})
+
+const { url } = await startStandaloneServer(server, {
+  context: async (ctx) => (ctx),
+});
+
+```
+
+### Fastify Example
+
+```typescript
+import fastify, { FastifyRequest } from 'fastify'
+import fastifyApollo, {
+  fastifyApolloDrainPlugin,
+} from '@as-integrations/fastify'
+
+type MyContext = {
+  request: FastifyRequest
+}
+
+const opaClient = new OpenPolicyAgentClient({
+  url: 'http://opa.test:3000',
+})
+
+const transformer = opaTransformer(opaClient, {
+  requestContextField: 'request' // should be the name of the request context field
+})
+
+const schema = transformer(makeExecutableSchema({ typeDefs, ... }))
+
+
+const apolloServer = new ApolloServer<ApolloContext>({
+    schema,
+    plugins: [fastifyApolloDrainPlugin(app)],
+  })
+
+  await apolloServer.start()
+
+  app.log.debug({}, 'Apollo Server plugin loaded')
+
+  // Build context function
+  await app.register(fastifyApollo(apolloServer), {
+    context: async (request) => {
+      return {
+        request, // FastifyRequest
+      }
+    },
+  })
+
+```
+
+
 ## Custom directive
 
 The authorization directive can be customized registering a custom one in the schema and specifying its name in the plugin configuration
@@ -99,19 +169,13 @@ directive @policy(path: String!, options: OpaOptions) on OBJECT | FIELD_DEFINITI
 ```
 
 ```typescript
-app.register(opaAuthPlugin, {
-  // ...
+const transformer = opaTransformer(opaClient, {
   authDirective: 'policy'
-})
-```
-
-```typescript
-app.register(opaAuthPlugin, {
-  // ...
   opaOptions: {
     // ...
   }
 })
+
 ```
 
 ## 🌳 Join Us in Making a Difference! 🌳

@@ -1,2 +1,2 @@
-export * from "./cache";
-export * from "./graphqlOpaDirectiveOptions";
+export * from './cache'
+export * from './graphqlOpaDirectiveOptions'
