@@ -87,7 +87,7 @@ If you need to forward the headers to OPA you can use the `requestContextField` 
 To do that you need to manually build the context by adding the request object. 
 
 > Currently the request should have a `headers` property with `http.IncomingHttpHeaders` type. 
-> Compatible with `FastifyRequest<...>` and `http.IncomingRequest`
+> Compatible with `FastifyRequest<...>` and `http.IncomingRequest`.
 
 ### Apollo Server Example
 ```typescript
