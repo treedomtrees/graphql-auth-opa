@@ -10,6 +10,7 @@ __Made with ❤️ at&nbsp;&nbsp;[<img src="https://assets.treedom.net/image/upl
 
 ```typescript
 import { opaAuthDirective } from "@treedom/graphql-auth-opa/opaAuthDirective";
+// You could also use the @styra/opa OpaClient
 import { OpenPolicyAgentClient } from "@treedom/opa-client-sdk";
 // 
 
