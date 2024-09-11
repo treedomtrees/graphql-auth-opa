@@ -162,7 +162,7 @@ const apolloServer = new ApolloServer<ApolloContext>({
 
 ## Custom directive
 
-The authorization directive can be customized registering a custom one in the schema and specifying its name in the plugin configuration
+The authorization directive can be customized registering a custom one in the schema and specifying its name in the plugin configuration:
 
 ```graphql
 scalar OpaOptions
