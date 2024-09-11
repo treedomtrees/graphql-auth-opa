@@ -51,7 +51,7 @@ const { url } = await startStandaloneServer(server, {
 
 ## OPA policy input
 
-This plugin queries OPA providing the following properties as `input`
+This plugin queries OPA providing the following properties as `input`:
 
 - `headers` the headers object, this require a context request forwarding
 - `parent` the GraphQL parent object of the field/object which got queried
