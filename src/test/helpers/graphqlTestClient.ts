@@ -8,25 +8,25 @@
  * - removed the check of mercurius plugin registration
  * - removed subscription client
  */
-import type { FastifyInstance } from "fastify";
-import type { IncomingHttpHeaders } from "http";
+import type { FastifyInstance } from 'fastify'
+import type { IncomingHttpHeaders } from 'http'
 
-import { DocumentNode, GraphQLError, print } from "graphql";
+import { DocumentNode, GraphQLError, print } from 'graphql'
 
 // import { SubscriptionClient } from "./subscription/client"
 
-import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
 
-export type GQLResponse<T> = { data: T; errors?: GraphQLError[] };
+export type GQLResponse<T> = { data: T; errors?: GraphQLError[] }
 
 export type QueryOptions<
   TVariables extends Record<string, unknown> | undefined = undefined,
 > = {
-  operationName?: string | null;
-  headers?: IncomingHttpHeaders;
-  cookies?: Record<string, string>;
-  variables?: TVariables;
-};
+  operationName?: string | null
+  headers?: IncomingHttpHeaders
+  cookies?: Record<string, string>
+  variables?: TVariables
+}
 
 export function createGraphqlTestClient(
   /**
@@ -43,17 +43,17 @@ export function createGraphqlTestClient(
     /**
      * Global Headers added to every query in this test client.
      */
-    headers?: IncomingHttpHeaders;
+    headers?: IncomingHttpHeaders
     /**
      * GraphQL Endpoint registered on the Fastify instance.
      * By default is `/graphql`
      */
-    url?: string;
+    url?: string
     /**
      * Global Cookies added to every query in this test client.
      */
-    cookies?: Record<string, string>;
-  } = {},
+    cookies?: Record<string, string>
+  } = {}
 ): {
   /**
    * Query function.
@@ -70,8 +70,8 @@ export function createGraphqlTestClient(
     TVariables extends Record<string, unknown> | undefined = undefined,
   >(
     query: TypedDocumentNode<TData, TVariables> | DocumentNode | string,
-    queryOptions?: QueryOptions<TVariables>,
-  ) => Promise<GQLResponse<TData>>;
+    queryOptions?: QueryOptions<TVariables>
+  ) => Promise<GQLResponse<TData>>
   /**
    * Mutation function.
    *
@@ -87,8 +87,8 @@ export function createGraphqlTestClient(
     TVariables extends Record<string, unknown> | undefined = undefined,
   >(
     mutation: TypedDocumentNode<TData, TVariables> | DocumentNode | string,
-    mutationOptions?: QueryOptions<TVariables>,
-  ) => Promise<GQLResponse<TData>>;
+    mutationOptions?: QueryOptions<TVariables>
+  ) => Promise<GQLResponse<TData>>
 
   /**
    * Returns federated entity by provided typename and keys
@@ -98,21 +98,21 @@ export function createGraphqlTestClient(
   getFederatedEntity: <
     TData extends Record<string, unknown> = Record<string, any>,
   >(options: {
-    typename: string;
-    keys: Record<string, string | number>;
-    typeQuery: string;
-  }) => Promise<TData>;
+    typename: string
+    keys: Record<string, string | number>
+    typeQuery: string
+  }) => Promise<TData>
 
   /**
    * Set new global headers to this test client instance.
    * @param newHeaders new Global headers to be set for the test client.
    */
-  setHeaders: (newHeaders: IncomingHttpHeaders) => void;
+  setHeaders: (newHeaders: IncomingHttpHeaders) => void
   /**
    * Set new global cookies to this test client instance.
    * @param newCookies new Global headers to be set for the test client.
    */
-  setCookies: (newCookies: Record<string, string>) => void;
+  setCookies: (newCookies: Record<string, string>) => void
   /**
    * Send a batch of queries, make sure to enable `allowBatchedQueries`.
    *
@@ -124,135 +124,135 @@ export function createGraphqlTestClient(
    */
   batchQueries: (
     queries: {
-      query: DocumentNode | string;
-      variables?: Record<string, any>;
-      operationName?: string;
+      query: DocumentNode | string
+      variables?: Record<string, any>
+      operationName?: string
     }[],
-    queryOptions?: Pick<QueryOptions, "cookies" | "headers">,
-  ) => Promise<GQLResponse<any>[]>;
+    queryOptions?: Pick<QueryOptions, 'cookies' | 'headers'>
+  ) => Promise<GQLResponse<any>[]>
   /**
    * Global headers added to every request in this test client.
    */
-  headers: IncomingHttpHeaders;
+  headers: IncomingHttpHeaders
   /**
    * Global cookies added to every request in this test client.
    */
-  cookies: Record<string, string>;
+  cookies: Record<string, string>
 } {
   const readyPromise = new Promise<void>(async (resolve, reject) => {
     try {
-      await app.ready();
-      resolve();
+      await app.ready()
+      resolve()
     } catch (err) {
       if (
         err instanceof Error &&
-        err.message === "app.ready is not a function"
+        err.message === 'app.ready is not a function'
       ) {
-        return reject(Error("Invalid Fastify Instance"));
+        return reject(Error('Invalid Fastify Instance'))
       }
-      reject(err);
+      reject(err)
     }
-  });
-  let headers = opts.headers || {};
-  let cookies = opts.cookies || {};
+  })
+  let headers = opts.headers || {}
+  let cookies = opts.cookies || {}
 
-  const url = opts.url || "/graphql";
+  const url = opts.url || '/graphql'
 
   const query = async (
     query: string | DocumentNode | TypedDocumentNode,
     queryOptions: QueryOptions<Record<string, unknown> | undefined> = {
       variables: {},
-    },
+    }
   ) => {
-    await readyPromise;
+    await readyPromise
     const {
       variables = {},
       operationName = null,
       headers: querySpecificHeaders = {},
       cookies: querySpecificCookies = {},
-    } = queryOptions;
+    } = queryOptions
 
     return (
       await app.inject({
-        method: "POST",
+        method: 'POST',
         url,
         cookies: {
           ...cookies,
           ...querySpecificCookies,
         },
         headers: {
-          "content-type": "application/json; charset=utf-8",
+          'content-type': 'application/json; charset=utf-8',
           ...headers,
           ...querySpecificHeaders,
         },
         payload: JSON.stringify({
-          query: typeof query === "string" ? query : print(query),
+          query: typeof query === 'string' ? query : print(query),
           variables,
           operationName,
         }),
       })
-    ).json();
-  };
+    ).json()
+  }
 
   const setHeaders = (newHeaders: IncomingHttpHeaders) => {
-    headers = newHeaders;
-  };
+    headers = newHeaders
+  }
 
   const setCookies = (newCookies: Record<string, string>) => {
-    cookies = newCookies;
-  };
+    cookies = newCookies
+  }
 
   const batchQueries = async (
     queries: {
-      query: DocumentNode | string;
-      variables?: Record<string, unknown>;
-      operationName?: string;
+      query: DocumentNode | string
+      variables?: Record<string, unknown>
+      operationName?: string
     }[],
-    queryOptions?: Pick<QueryOptions, "cookies" | "headers">,
+    queryOptions?: Pick<QueryOptions, 'cookies' | 'headers'>
   ) => {
-    await readyPromise;
+    await readyPromise
 
     const {
       headers: querySpecificHeaders = {},
       cookies: querySpecificCookies = {},
-    } = queryOptions || {};
+    } = queryOptions || {}
 
     const responses: GQLResponse<unknown>[] = (
       await app.inject({
-        method: "POST",
+        method: 'POST',
         url,
         cookies: {
           ...cookies,
           ...querySpecificCookies,
         },
         headers: {
-          "content-type": "application/json; charset=utf-8",
+          'content-type': 'application/json; charset=utf-8',
           ...headers,
           ...querySpecificHeaders,
         },
         payload: JSON.stringify(
           queries.map(({ query, variables, operationName }) => {
             return {
-              query: typeof query === "string" ? query : print(query),
+              query: typeof query === 'string' ? query : print(query),
               variables: variables || {},
               operationName: operationName || null,
-            };
-          }),
+            }
+          })
         ),
       })
-    ).json();
+    ).json()
 
-    return responses;
-  };
+    return responses
+  }
 
   const getFederatedEntity = async ({
     typename,
     keys,
     typeQuery,
   }: {
-    typename: string;
-    keys: Record<string, string | number>;
-    typeQuery: string;
+    typename: string
+    keys: Record<string, string | number>
+    typeQuery: string
   }) => {
     try {
       const result = await query(
@@ -270,21 +270,21 @@ export function createGraphqlTestClient(
           variables: {
             representations: [{ __typename: typename, ...keys }],
           },
-        },
-      );
+        }
+      )
 
-      return result.data._entities[0];
+      return result.data._entities[0]
     } catch (err) {
       if (
         err instanceof Error &&
         err.message.includes('Unknown directive "@key"')
       ) {
-        throw new Error("Service is not federated");
+        throw new Error('Service is not federated')
       }
 
-      throw err;
+      throw err
     }
-  };
+  }
 
   return {
     query,
@@ -295,5 +295,5 @@ export function createGraphqlTestClient(
     setCookies,
     batchQueries,
     getFederatedEntity,
-  };
+  }
 }

@@ -1,7 +1,7 @@
-export * from "./opaAuthTransformer";
-export * from "./opaAuthDirective";
-export * from "./types";
+export * from './opaAuthTransformer'
+export * from './opaAuthDirective'
+export * from './types'
 
-import { opaAuthTransformer } from "./opaAuthTransformer";
+import { opaAuthTransformer } from './opaAuthTransformer'
 
-export { opaAuthTransformer };
+export { opaAuthTransformer }
