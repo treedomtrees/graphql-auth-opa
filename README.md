@@ -82,7 +82,7 @@ allow if {
 
 ## Headers forwarding
 
-If you need to forward the headers to OPA you can use the `requestContextField` option to specify the name of the request context field
+If you need to forward the headers to OPA you can use the `requestContextField` option to specify the name of the request context field.
 
 To do that you need to manually build the context by adding the request object. 
 
