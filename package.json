@@ -1,6 +1,6 @@
 {
   "name": "@treedom/graphql-auth-opa",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "lib/index.js",
   "scripts": {
     "test": "mkdir -p ./dist/lib && cp ./src/lib/opaAuthDirective.gql ./dist/lib/ && borp --coverage --coverage-exclude test/**/*.js",
